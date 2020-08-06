@@ -17,7 +17,6 @@ class NotifyAdminViaSlack implements ShouldQueue
     public function handle($event)
     {
         // Slack notification to the admin
-        //dump('Slack message here');
-        sleep(10);
+        dump('Slack message here');
     }
 }

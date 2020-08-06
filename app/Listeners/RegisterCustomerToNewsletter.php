@@ -17,7 +17,6 @@ class RegisterCustomerToNewsletter implements ShouldQueue
     public function handle($event)
     {
         // Register to newsletter
-        //dump('Registered to newsletter');
-        sleep(10);
+        dump('Registered to newsletter');
     }
 }
