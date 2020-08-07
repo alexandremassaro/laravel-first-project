@@ -10,11 +10,13 @@
         </div>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-9">
-            <a href="{{ route('customers.create') }}">Add New Customer</a>
-        </div>
-    </div>
+    @can('create', App\Customer::class)
+        <div class="row justify-content-center">
+            <div class="col-9">
+                <a href="{{ route('customers.create') }}">Add New Customer</a>
+            </div>
+        </div>        
+    @endcan
 
 
 
@@ -24,7 +26,13 @@
                 {{ $customer->id }}
             </div>
             <div class="col-2">
-                <a href="{{ route('customers.show', ['customer' => $customer]) }}">{{ $customer->name }}</a>
+                @can('view', $customer)
+                    <a href="{{ route('customers.show', ['customer' => $customer]) }}">{{ $customer->name }}</a>
+                @endcan
+
+                @cannot('view', $customer)
+                    {{ $customer->name }}
+                @endcannot
             </div>
             <div class="col-2">
                 {{ $customer->company->name }}
@@ -38,8 +46,10 @@
         </div>
     @endforeach
 
-    <div class="row">
-        
+    <div class="row pt-5">
+        <div class="col-12 d-flex justify-content-center">
+            {{ $customers->links()  }}
+        </div>
     </div>
 
 @endsection

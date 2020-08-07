@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Company;
 use App\Customer;
 use App\Events\NewCustomerHasRegisteredEvent;
+use Intervention\Image\Facades\Image;
 use Illuminate\Http\Request;
 
 class CustomersController extends Controller
@@ -19,7 +20,8 @@ class CustomersController extends Controller
 
         // $activeCustomers = Customer::active()->get();
         // $inactiveCustomers = Customer::inactive()->get();
-        $customers = Customer::all();
+        //$customers = Customer::all();
+        $customers = Customer::with('company')->paginate(15);
 
         
         //return view('customers.index', compact('activeCustomers', 'inactiveCustomers'));
@@ -28,6 +30,7 @@ class CustomersController extends Controller
     
     public function create()
     {
+        $this->authorize('create', Customer::class);
         $companies = Company::all()->sortBy('name');
         $customer = new Customer();
         return view('customers.create', compact('companies', 'customer'));
@@ -35,7 +38,11 @@ class CustomersController extends Controller
 
     public function store() {
 
+        $this->authorize('create', Customer::class);
+
         $customer = Customer::create($this->validateRequest());
+
+        $this->storeImage($customer);
 
         event(new NewCustomerHasRegisteredEvent($customer));
 
@@ -46,6 +53,8 @@ class CustomersController extends Controller
     {
         //$customer = Customer::Where('id', $customer)->firstOrFail();
 
+        $this->authorize('view', $customer);
+
         return view('customers.show', compact('customer'));
     }
 
@@ -54,6 +63,9 @@ class CustomersController extends Controller
         //$customer = Customer::Where('id', $customer)->firstOrFail();
 
         //$company = Company::where('id', $customer->company_id)->firstOrFail;
+
+        $this->authorize('update', $customer);
+
         $companies = Company::all();
         
         return view('customers.edit', compact('customer', 'companies'));
@@ -61,25 +73,47 @@ class CustomersController extends Controller
 
     public function update(Customer $customer) {
 
+        $this->authorize('update', $customer);
+        
         $customer->update($this->validateRequest());
+
+        $this->storeImage($customer);
 
         return redirect('customers/' . $customer->id);
     }
 
     public function destroy(Customer $customer) {
 
+        $this->authorize('delete', $customer);
+
         $customer->delete();
 
         return redirect('customers');
     }
 
-    public function validateRequest()
-    {
+    public function validateRequest() {
+
         return request()->validate([
             'name' => 'required|min:3',
             'email' => 'required|email',
             'active' => 'required',
-            'company_id' => 'required'
+            'company_id' => 'required',
+            'image' => 'sometimes|file|image|max:5000'
         ]);
+    }
+
+    private function storeImage($customer) {
+        if (request()->has('image')) {
+            $customer->update([
+                'image' => request()->image->store('uploads', 'public'),
+            ]);
+
+            $image = Image::make(public_path('storage/' . $customer->image))->resize(100, 100, function($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize();
+            });
+
+            $image->save();
+        }
     }
 }

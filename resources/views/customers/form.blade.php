@@ -32,5 +32,11 @@
     </select>
 </div>
 
+<div class="form-group pb-3 d-flex flex-column">
+    <label for="image">Profile Image</label>
+    <input type="file" name="image" id="image">
+</div>
+<div class="pb-3">{{ $errors->first('image') }}</div>
+
 
 <button type="submit" class="btn btn-primary">Save customer</button>
